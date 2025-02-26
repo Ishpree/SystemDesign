@@ -1,0 +1,48 @@
+-**> User profile based filtering in java**
+
+Requirements: Spring Data JPA's Specification and Criteria API
+
+What is Specification?
+->FUnctinal interface Used to build database queries using Criteria API. It allows for dynamic queries
+Key components of Specification
+->Specification<T>Interface-> Defines a predicate(a condtion) that can be applied to a query. Function
+->JpaSpecificationExecutor<T>-> Enables reposiroty to execute Specification based queries
+->Criteria API->Provides methods to build dynamic query conditions
+
+toPredicate function is used to create the filering criterias
+if we are using the search criteria class
+**->**Create a class to represent the search criteria, including the filter key, operation and value
+public class SearchCriteria
+{
+private String key;
+private String operation; 
+private Object Value;
+}
+for ->dynamic plan with cost greater than 5000
+if(criteria.getOperation().equalsIgnoreCase(">))
+{
+return builder.greaterThan(root.get("cost"), 5000);
+}
+
+When we want to use the user profile, we are directly working with the attributes of the user profile
+without creating the search criteria
+user profile data(age, location, income, preferred providers)
+if low income filter plans with low premium, if location is california filter plans in california
+
+List<Predicates>predicated = new ArrayList<>();
+if(userLocation!=NULL)
+{
+predicates.add(builder.equal(root.get("premium"), userLocation))
+}
+
+
+
+**->**A class that implements Specification<HealthPlan> to build predicates based on the search criteria
+
+->CombineSpecfications: If we have multiple criterias, we can combine them using Specification interface
+
+->Use the specifications int the Repository->The repository extends jpa repository and jpa sepcific executor<HealthPlan>
+
+->Service Layer to execute the search
+
+->Controller to Handle Search Requests

@@ -1,0 +1,14 @@
+
+Real life applications
+
+->Pizza rate calculation based on toppings
+->Coffee machine design
+
+Decorator pattern is used to avoid class explosion 
+which means lets say there is a base pizza then there is a topping of cheese , 
+topping of jalapeno, topping of tomato
+
+we will have to create mutliple classes like base pizza, base+cheese, base+cheese+tomato
+which is not very feasible when there are many combinations
+
+Decorator function helps with that. 

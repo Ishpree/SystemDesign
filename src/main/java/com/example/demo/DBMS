@@ -1,0 +1,169 @@
+
+#**Indexing**#
+
+Index file is created,
+Primary indexing is applied in the data files which are sequentially ordered(sorted based on a key)
+->Data is stored in blocks, say 10 records are stored in one blocks
+->The keys in the index file- which is the first index of the block will store the reference to its block.
+->When we have to seach a particular key, we first applu binary search to the index table
+->once we find that, we find the reference to the block then we can do a binary search in that block
+
+ #**Indeas/Schemas for indexing**#
+Dense index:
+In the index file, all the keys are present with a reference 
+Sparse index
+In the index file, not all keys are present instead keys store reference to a block
+
+  #**Two types of primary indexing**#
+->When the data file is sorted on the basis of the primary key(in this case we dont need to put all the entries in the index file->sparse indexing)
+
+-When the data file is sorted on the basis of the non-key attribute(There could be duplicate values, 
+so we cant do sparse indexing): In this case, we store all the unique values of the non key attribute
+and the block in which that value first occurred. ->This type is also called clustering indexing. 
+This wont be called sparse indexing even though we are storing references to blocks is because
+we are storing all the unique values of the non-key attribute in the index file.
+This kind is used when we have to group based on a particular attribute
+
+ #**Multi level indexing**#
+->When the data is very large, 
+->We create a index file, then the index file is further indexed 
+->The first index file is then stored in hard disk and the last one in RAM.
+
+
+**Secondary indexing** (Non-clustering index)
+->When we want to do indexing based on an unsorted attribute 
+->Search key could be key or non-key
+->Base pointer of all the seach keys have to be stored(dense indexing)
+->For every search key the pointer of the block is stored
+->Then linear search will have to used in that block in the data file.
+->Index table will be sorted->so binary search is applied in the index file and once we find the block, 
+linear search is applied in that block.
+->In case the search key has duplicate values, it will have multiple blocks corresponding to each entry
+,those blocks are stored in the form of a linked list.
+
+
+
+**Normal forms**
+-> 1NF: No multi valued attribute
+-> 2NF: No partial dependencies(The non primary key attributes depend completely on the complete composite key and not a part of it) eg(combined table of student and their respective courses->(not in 2NF)
+->3NF: No transitive dependencies(The non primary key attributes should depend only on the primary key and not on each other)
+
+
+**Clustering and Replica sets**,
+->When the requests are too much
+->Replica sets of a server is created, all the servers have the same data
+->Redundancy is introduced, even if one server shuts down, the other is availble
+->Sets of servers->replica sets->clusters
+->Clusteing adds a level of abstraction because user does not know the requests is coming from which server
+->It helps with load balancing, if there is only one server, only one server has to handle the 
+entire load, but with clustering, the requests are divided between the servers
+->Content delivery network: Group of servers are geographically distributed.
+
+
+**Partitioning and Sharding**
+->When the data is too much, it cant be stored in a single database.
+->When the requests are too much, it is very difficult to manage with just one system, the response time increases
+->To solve this problem, the data is distributed
+->We have to apply data base optimization techniques:
+  1.)Scale up -> Hardware is increased -> 1.) this is pricy. 2.) If we think that we increase the disk size, say it is doubled  and the requests are also doubled, practically the response time does not become half.
+  2.)Replica sets: The copies of the database are made. There is a master node and there are replicas. 
+  The updates are sent to the master node and the master node will send it to the replicas. This creates
+  delay in response. There could be a mismatch, one replica gets updated and the other does not
+  3.) A much better way to solve this issue is Partioning:
+  ->Scale out technique
+  ->New nodes are added
+->***Horizontal partitioning***: Tuples are divided and stored, eg, if there are 1000 records, 500 might be stored in one server and the remaning the next server
+->***Vertical partitioning***: Need to access multiple servers to access complete tuples
+Advanteges of partiioning:
+->Parallelism: Lets say multiple requests are coming in, based on the type, like if the record is among the first 1000 it gets redirected to the the first server
+->Avaliability: If the first server crashes, the requests that are coming to the first server wont be 
+successful but the others will be, so atleast the system is not crashing due to being bombarded with too many requests.
+->Performance: Response time decreases
+->Manageibility
+->Cost is lesser compared to vertical scaling
+
+**Sharding:**
+->A technique of Horizontal partitionting
+->A routing layer is introduced which determines which request will go to which server
+
+Advantages: Scalability and Avaialblity
+
+Disadvantages
+->Complexity: because the partition mapping , routing layer has to be implemnted
+->Non uniformity can be introduced, for example if the database is divided on the basis of a
+non-primary key which has duplicates, and to make sure all tuples based on a particular key are 
+in one server we might have to divide the database non uniformly
+->Not suited for analytical type queries, let say we want have a table of customer purchases, 
+and we want to find the total purchase. In that case we have figure out the purchase from every table and add again which increases complexity
+
+
+**Database scaling:**
+->Cab Booking App->
+Tiny startup
+10 customers
+a single small db stores all customer, trips, locations, booking, data and customer trip history.
+1 trip booking in 5 mins
+Issues:
+Many things are slow, after investigating we get to know that API latency is the problem
+API latency->there was a small database, but as the bookings increased to 10 bookings a minute
+the system is not able to handle it timely.
+Requests increaed to 30 bookings per minute
+Transactions facing Deadlock, Starvation and frequent failure
+Pattern1:
+****Query Optimization and Connection Pool Implementation:**
+->Cache frequently used non-dynamic data like booking history, payment, user profiles etc
+->Introduce Database Redundancy(or may be use noSql databases)
+->Cache DB connections by using cache pool libraries
+->Multiple application threads can use same DB connection
+->Good optimizations as of now
+->Scaled the business to one more city, and now getting  100 bookings per minute
+
+Now again the system starts becoming slow
+
+-**>Pattern-2**
+Vertical scaling or scale up
+Upgrading our initial tiny machine.
+RAM by 2x and SDD by 3x
+Scale up is pocket friendly till a point only
+Cost increases exponenetially
+Business is growing, we are scaling to 3 more cities
+
+-**>Patternn 3**
+Command query Responsibility Segregation(CQRS)
+->The scaled up big machine is not able to handle all the read/Write requests.
+->Seperate read/write operations physical machine wise
+**Lets say n/2 were read requests, n/2 were write requests
+Two replicas are made of the primary machine
+If there is a write request, it comes to the primary machine, and if there is a read
+requests it goes to the replica
+The replicas are in sync with the primary machine, so whenever a write operation is made on the 
+primary machine, that thing gets updated to the replicas as well**
+->Business is grwoing and now we need to scale it to 2 more cities.
+->Lag between primary and replica is impacing user experince.
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

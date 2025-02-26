@@ -1,0 +1,45 @@
+
+SpringBoot Theory
+   
+**What is a Bean?**
+->Java Object. When the java object is managed by the spring application, it is referred to as Bean.
+
+**What is Spring IOC container?**
+->Manages all the beans inside the springboot application along with the dependecies of those beans.
+->Bean deletion, bean injection everything will be managed by the IOC container
+
+**What is application context?**
+->It is the implementation of the spring IOC container. the terms spring ioc container and application context
+may be used interchangibly.
+->Business object and Configuration Metadata(Annotations)
+->Say there is a java object, that java object will be converted to a bean 
+using the configurations and then will be stored inside the application context
+
+
+**2 ways to create a Bean**
+->@Component: For example if we are using @service annotation, if we go inside it, there will be a 
+component annotation, so whatever annotation we used it will have the component annotation as a part of it.
+->@Configuration and @Bean: 
+
+****How to check if the beans are present in application****
+->Using actuators:
+->using object of application context 
+
+**What is REST(Representational State Transfer) API**
+-An architectural style for desgining networked applications. It leverages HTTP methods, GET, POST, PUT, 
+DELETE to perform CRUD operations on resources identified by URLs
+Its simple, scalable , decouples the client and the server 
+
+**Loose coupling**: When components are independent and have minimal depencies . In microservercies architecture
+**Tight coupling**: In monolithic architectures
+Mostly loose coupling is only preferred but tight coupling can be benefinical when performance optimization is needed. 
+
+
+
+
+
+
+
+
+
+

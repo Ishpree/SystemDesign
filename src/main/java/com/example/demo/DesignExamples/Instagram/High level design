@@ -1,0 +1,86 @@
+
+High level design->Instagram
+
+    #Features#
+->Store/Get Images
+->Like, Comment
+(Can we comment on a comment? In our feature we can like a comment and not reply)
+->Follow someone
+->Publish a news feed
+
+   #ER-diagram#
+
+Likes table
+->uid
+->post id
+->timestamp
+->userid
+->Type(To tell the like is on a comment or a post)
+
+Comment table
+->uid
+->post id
+->timestamp
+->userid
+->text
+
+Post table
+->post id
+->text
+->image url
+->user id
+->timestamp
+
+Activity table
+->activity id(of either a post or a comment)
+->likes
+
+Follow table
+->follower id
+->followee id
+->timestamp
+
+   #Design#
+
+->Requests from the client side first come to a gateway
+->Gateway encapsulates reverse proxy, authentication tokens etc
+->Gateway can convert the http protocol that we internally understand. This is also an additonal security, so that no one knows how to hit the server because of the language that we understand.
+->Request for get User Feed comes in 
+->There is a service called User Feed service
+->To make this resilient and to scale we need multiple servers running the same service
+->To route a request to a particular server, load balancer is used. 
+->Its too expensive to ask the load balancer to direct the request every time so we use snapshots
+of the entire system. Load Balancer is basically maintaining the state of the entire system, like what
+services are there, where are they stored. They keep connected with the gateway to ensure it knows who 
+to redirect the request to.
+->Load Balancer sends the information to the gateway as snapshot, the snapshot will be periodically updated, and then the gateway decided which server it should send the request to.
+->User feed service is dependent on the post service and the follow service
+->Get users followed by the user id , once we have these set of users we query the posts of these users
+->But the above approach is not scalable, as a lot of pressure will there on the post servive
+whenever a request comes, the system might crash
+->The better way is to precompute the user feed
+->Whenever the posts for a user is updated, the followers of that user are notified. So there is a incremental update in the user feeds of the followers of the user who has posted.
+->Whe store the user feeds in the caches. Caches have limited memory , so for the users who dont login
+frequently we dont have to store their feed in the cache we can simply recompute when they log in. 
+->If there is problem with the cache or any other reason, the user feed can be calculated with the brute force way. 
+->In case there is celebrity who has a million followers, in that there is a problem with the above approach, notifying so many users while most likely crash the system.
+->One way to resolve this could be send notifications in batches
+->Another way is to not send the notifications, but wait for the followers to pull notifications from you.
+->Periodically the user's application will be polling the models for requests
+->Since not everybody will be pulling at the same time, this decreases the load compared to the push model in this case
+->So overall it is a hybrid model of push and pull based on different conditions.
+
+
+
+Other features not considered
+->chat
+->profile
+->session management
+
+
+
+
+
+
+
+
