@@ -1,4 +1,4 @@
-package com.example.demo.abstraction;
+package com.example.demo.OOPS.abstraction;
 
 // Nested classes help to hide the functionality of the inner classes
 public class NestedClasses {

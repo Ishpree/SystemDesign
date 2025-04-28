@@ -1,4 +1,4 @@
-package com.example.demo.abstraction;
+package com.example.demo.OOPS.abstraction;
 
 public class LearnInterface 
 {

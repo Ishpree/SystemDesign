@@ -6,7 +6,7 @@
 //memory is no longer being referenced by anything from the stack, the garbage collector removes it.
 //Strings are stores in heap memory in a seperate block called spring pool since strings have
 //to be accesses multiple times.
-package com.example.demo.Memory;
+package com.example.demo.Fundamentals;
 
 class Data
 {

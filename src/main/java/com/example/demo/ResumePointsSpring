@@ -46,3 +46,161 @@ predicates.add(builder.equal(root.get("premium"), userLocation))
 ->Service Layer to execute the search
 
 ->Controller to Handle Search Requests
+
+
+
+
+**Real time notifications using web sockets:**
+-> Unlike traditional HTTP requests which required polling or long polling, web sockets establish a perisitent connection that allows the server to push updates to the client instantly.
+
+->Works well with real-time applications like messaging apps, stock updates and live dashboards
+
+Alternatives:
+->Server sent updates : Works for unidirectional updates(server to client)
+->Push notifications: used when the app is not actively running(eg. Firebase cloud messaging)
+->Polling: Periodically checks the server for updates(less efficient)
+
+Web sockets-> Used to send notifications to users who are currently online
+
+**Flow for web sockets**
+-> The client sends an HTTP request to the server, requesting to upgrade the connection to Websockets
+->The server responds with a 101 Switching protocols status, agreeing to switch from HTTP to Websockets
+->A peristent connection is established between the client and server
+->Websocket protocol(ws:// or wss:// protocol) is used for websocket communication
+
+->Full duplex communication: 
+ Once the communication is open, both the client and server can send and receive messages request anytime
+ Messages are sent as frames(small chunks of data) over the Websocket connection
+
+ ->Handling events and message processing
+ The client listens for incoming messages from the server(policy updates)
+ The server listens for messages from the client(eg, acknowlegment of the notification)
+ Event handlers->Handlers for "onmessage", "onopen" , "onclose" 
+ Messages are usually exhanged in json format
+
+ Technologies used:
+ Spring Boot Web socket API: To create Web sockets endpoints
+ STOMP protocal(Optiional) : Helps in managine Web socket subscriptions better
+ PostgreSQL -> Stores policies and user preferences
+ Redis or Kafka(For scalaility)
+ React/Angular : Frontend
+
+
+ Server side:
+
+ -> **Define the websocket endpoint in spring boot** : This is where he clients connect to receive updates 
+-> Inside the controller class
+
+     @SubscribeMapping("topic/policy-updates")
+     @SendTo("topic/policy-updates")
+     public String subscribe()
+     {
+        return "Subscribed to policy updates";
+     }
+
+-> **Configure websocket messaging in springboot**
+In the configuration layer:
+
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer
+{
+@Override
+public void configureMessageBroker(MessageBrokerRegistry config)
+{
+    config.enableSimpleBroker("/topic");
+    config.setApplicationDestinationPrefixes("/app");
+}
+
+}
+
+Notify clients when policy is updated
+in the service layer
+
+@Service
+public class PolicyUpdateService
+{
+    private final SimpleMessagingTemplate messageTemplate;
+
+    public PolicyUpdateService(SimpMessagingTemplate messageTemplate)
+    {
+         this.messageTemplate = messageTemplate;
+    }
+
+public void notifyPolicyUpdate(String policyId, String message)
+   {
+      //convert and send is an inbuilt function in SimpMessagingTemplate class and it sends message to a specific destination
+       messageTemplate.covertAndSend("topic/policy-updates", "Policy"+ policyId + "updated: " + message)'
+   }
+}
+
+->Springs built in SimpleBroker automatically tracks which Websocket sessions are subscribed to which topics, it maintains an internal mapping of topic names to client sessions
+->By default, Spring Web socket with simple broker does not store subscriptions in a database. Instead it mainatins them in memory while the Web socket connections is active. 
+->Once the client disconnects, its subscription is automatically removed
+->We will need a database/cache to store subscriptions when:
+-Re-subscribe users automatically when they reconnect, allow users to set notification preferences(eg, subsctibe only to spceific policy types)
+
+
+**Trigeer notification on Policy Change**
+
+In the controller layer
+@RestController
+@RequestMapping("api/policies")
+public class PolicyController
+{
+    private final PolicyUpdateService p;
+
+    public  String updatePolicy(@PathVariable String policyId, @RequestBody String newDetails)
+    {
+        p.notifyPolicyUpdate(policyId, "PolicyDetailsChanged");
+
+        return "Policy Updated"
+    }
+
+}
+
+**Frontend**
+The client connects to /ws . Not writing the code for it.
+
+The /topic in /topic/policy-updates is part of the message broker in Spring Boot WebSockets using STOMP
+It represents a broadbase channel where multiple subscribers can receive messages
+When the server sends a message to /topic/policy-updates all clients subscribed to it who are currently online wil receive the notification
+one-to-many
+
+/queue -> used for private, one-to-one messaging(notifiying a specific user about their policy)
+
+So websockets only when the user is online:
+So to send notifications when the user is offline other methods like push notification, sms/call us used
+
+other use cases for notifications:
+->claim status updates: Your insurance claim has been approved/rejected
+->Additonal documents required 
+->Premium payment reminders
+->policy expiry/renewal
+->discounts/offers
+->security alerts
+
+For document upload alerts 
+-.each users policy and claim documents are stored with a status : upload, missing, pending, 
+->if the document is missing the system sends reminders
+
+Premiu exprity or payment reminders:
+Each policy has a stary, renewal or payment status, 
+->A scheuled (cron) job runs daily to check for policues expiring soon
+->users are notified x days before the due date 
+
+Most systems use hybrid approach to handle notifications
+->It is a mix of web sockets, push notfications, sms , email
+->If the user is online, websocket notification is sent
+->If offline, a push notification or email is sent
+->some updates may also trigger an sms
+
+push notifications are also of 2 kinds: event driven(triggered when the event occures), speed is comparable to websockets and works also when the user is offline
+based on scheduled jobs: periodic alerts
+
+
+
+
+
+
+
+

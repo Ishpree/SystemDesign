@@ -1,0 +1,100 @@
+Need:
+But what if I had to share this link on a platform like Twitter,
+where each character matters? That scenario changes things—I’d opt for
+the second link. Another question: which link would impersonators and malicious actors use? 
+They might provide a shortened URL, claiming it leads to a nice blog like this, but it could end up 
+capturing personal details.
+there are pros and cons to using URL shorteners
+
+Functional Requirements
+->Provided an URL, our urlshortener service should generate a unique and shorter urls.
+->When a user pastes this shortened links in address bar, they should be redirected to the original link.
+->Optional, user should be given an option to choose a custom shortened link for their URL, for e.g. instead of random 12fxwg5r that we showed just above they can very well choose mylink5.
+->Optional, the shortened links should get expired after a default timespan.
+
+Non-Functional Requirements
+The system should be highly available. Why? Because if it is down, all the URL redirection will fail and the users will get Timeouts.
+The redirection should happen in real-time with minimal latency.
+The system should have some form of analytics and visualization around the links, such as tracking the number of click
+
+Assumptions required:
+
+what is the length of the url
+what is the volume of traffic
+is the system single instance or should we scale it
+
+All these new URLs need to be stored somewhere,
+we could inform users that their shortened URLs will expire after five years.
+
+Assuming we get popular overnight, we could expect upto 100 short link generated per second.
+New URLs shortening per second: 100 URLs/s 
+If we consider our reads it’ll be 100 * 100 = 10,000 redirections per second.
+
+Storage Estimates: Let’s assume that we are going to store every URL shortening request for 5 years.
+Since we are expecting a 100 new urls per second, the total number of urls that we have to deal in 5 years is going to be around:
+100 URLs/second * 60 seconds/minute * 60 minutes/hour * 24 hours/day * 30 days/month * 12 months/year * 5 years = 15 billion URLs
+
+Let’s assume that each stored object (both the original url as well as the shortened url)
+along with some metadata is around 1000 bytes. We will need then 
+15 billion * 1000 bytes ⇒ 15 trillion bytes ⇒ 15 TB.
+
+It is always better to cache some result isn’t it? Since we know that our system is 
+read heavy we can cache some of the short url links in our memory itself and serve it from there
+itself. This will reduce the load on our systems.
+
+Without caching, handling around 10,000 read requests per second would require the system to repeatedly 
+query the database to map short URLs to their corresponding long URLs, which could strain the database. 
+If we follow the 80-20 rule, which means that 20% of the URLs (redirections) are generating the 80% of the traffic. It would make sense to cache those 20%.
+Since we are getting around 10,000 read request per second, 20% will be 2000, and let’s say we are going to use some sort of eviction policy such as LRU (least recently used) to evict those urls that have not been read for a day.
+
+www.us.com/7 characters
+
+      Data capacity model
+      -> Long url-> 2kb(2048 char)
+      ->Short url-> 17 bytes(17 char)
+      ->Created at-> 7 bytes(7 char)
+      -> exp-at-> 7 bytes(7 char)
+        total-> 2.031 kb
+
+      30 m users
+      how much data generated 60.7 gb/month
+      0.7 tb/year
+
+As we calculated that we’ll be needing around 15 TB of storage and this number 
+can keep on growing we can’t store this data on a single box because of various reason 
+and the biggest would be a single point of failure. If that database crashes all the mapping of 
+long to short URL will be lost
+
+To scale out our DB, we need to partition the data. 
+For partitioning we need to develop the partitioning scheme that would divide our data evenly.
+
+
+Algorithms: B62, MD5 hash
+
+But the problem is with both these encoding types there is a possibility of collisions - meaning
+different urls might generate the same hash.
+To solve this issue, we use services like zookeeper or snowflake to generate unique counter values
+The service will allocate different ranges of counters for every server. like 1-100000, 100000-500000 to Another.
+When one of the server is out of counters a new set of counters will be allocated.
+
+So these generated counters will be encoded to a unique id using base62 encoding, which will be unique for 
+every url so now there will no collisions
+
+Lets say there is a url https://www.leetcode.com/u/Rubix_1/Problems
+and if we use the service tiny.url to shorten it 
+Lets say the counter generated is 72 -> the encoded verion with base(62) will be 1a
+
+Since for encoding we use 0123456789abcde....zABCD....Z
+72/62 -> remainder 10 -> a
+1/62  -> remainder 1  ->1
+
+the shortend url will be www.tiny.url/1a 
+
+
+
+
+
+
+
+
+      

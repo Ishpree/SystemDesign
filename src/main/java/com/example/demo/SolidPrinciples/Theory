@@ -1,0 +1,11 @@
+
+Advantages:
+
+->Avoid duplicate code
+->Easy to maintain
+->Easy to understand
+->Flexible software
+->Reduce complexity
+
+Single Responsility: A class should have only 1 reason to change. 
+which means a class should have only one responsibility

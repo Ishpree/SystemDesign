@@ -1,0 +1,73 @@
+
+//Multiple people trying to book a seat at the same time
+//Critical section of code: It is the code using which users are trying to access a shared resource.
+//We use a synchronized block in the critical section
+
+//**synchronized keyword** will allow only one user at a time even if the requests are coming at the same time. 
+If there are 3 users, u1, u2, u3 trying to book a seat at the same time, one  of the requests is processed
+the seat is changed from free to booked, when another requests is processed the seat wont be 
+free, so one seat will get alloted to only user.
+synchonized()
+{
+    Read seat row with ID: 10
+    if free
+    logic to change free to booked
+    update DB
+}
+
+The synchronized keywork cannot be used in distributed systems because 
+lets say the load balancer will direct the request from u1 to a system 1 and requests from u2 to another 
+systm, and 3 to another, so it wont help
+So we use **Distributed Concurrency control**
+->Optimistic concurrency control
+->Pesimistic concurrency control
+
+**Usage of Transaction:**
+It helps to main integrity and avoid inconsistency in the database, 
+
+In case of money being debited and credited to another account
+***if all success
+then commit
+else
+rollback***
+
+**DB locking**
+It helps us to make sure that no other transaction update the locked rows
+There are two kinds of locks
+->shared locks  
+->exclusive locks
+
+lets say there is a db row which says seat no and if it is free or not 
+seat no   free/booked
+ 10         free
+
+If there is a transaction which has a **shared lock** on a row, then if there is another transaction with a shared lock it can also read on that row but not write
+If a row has a shared lock on it, then exclusive lock cannot be granted, first the shared lock has to be released then only an exclusive lock can be put on it.
+
+In case a trasaction has a **exclusive** lock, in that case any other transaction with a shared lock or a 
+exclusive lock cannot make any change. 
+
+**Isolation Level**
+->There are multiple transactions running in parallel but each transaction feels like it running in isolation.
+ 
+                   Dirty read possible   Non-repeatable read   Phantom read
+Read uncommited           yes                    yes                yes
+Read commited             no                     yes                no
+Repeatable read           no                     no                 yes
+serializable              no                     no                 no
+
+**Dirty read**:
+If there is a transaction t1, which was trying to book a seat and it read from the db that the status is 
+free, it tried booking, the db was updated to status booked, but the changes were not yet commited
+There is a transaction t2, which is trying to book the same seat will read the status of the seat as booked from db even though the changes have not been commited yet
+Now, lets say the transaction t1 failed for some reason, the changes to the db will be rolled back and 
+the status of the seat is now free, but the transaction t1 read it as booked which is a dirty read
+
+**Non-repeatable read:**
+If a transaction reads the same value multiple times, and there is a chance it reads a different values at different times
+A transaction t1 reads a value from db as free and another transaction meanwhile books that seat and 
+the changes are committed and the status is changed as booked
+If the transaction t2 will again read the value, it will read booked
+
+**Phantom read:**
+If a transaction a runs a query and returns different rows every time then it is called phantom read

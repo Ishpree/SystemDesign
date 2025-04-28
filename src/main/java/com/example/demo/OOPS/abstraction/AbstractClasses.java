@@ -1,4 +1,4 @@
-package com.example.demo.abstraction;
+package com.example.demo.OOPS.abstraction;
 
 
 public class AbstractClasses
@@ -11,6 +11,7 @@ public class AbstractClasses
             System.out.println(g.sipAmount(3000, 2000));
         }
 }
+
 
 abstract class Investment {
 

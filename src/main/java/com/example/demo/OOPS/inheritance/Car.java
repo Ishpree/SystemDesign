@@ -1,4 +1,4 @@
-package com.example.demo.inheritance;
+package com.example.demo.OOPS.inheritance;
 
 public class Car extends Vehicle {
 
